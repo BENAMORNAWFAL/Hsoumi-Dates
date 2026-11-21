@@ -6,9 +6,10 @@ import { gsap, MQ, useGSAP } from "@/lib/gsap";
 import { parallax, revealOnEnter } from "@/lib/reveal";
 import { SplitLines } from "@/components/ui/SplitLines";
 import { JourneyStop } from "@/components/ui/JourneyStop";
+import type { Dictionary } from "@/i18n/config";
 
 /** 02 — About us. */
-export function Origin() {
+export function Origin({ t }: { t: Dictionary["about"] }) {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -32,11 +33,11 @@ export function Origin() {
     >
       <div className="shell">
         <div className="grid gap-y-24 lg:grid-cols-[minmax(0,560fr)_minmax(0,129fr)_minmax(0,591fr)]">
-          <figure className="relative mr-[12%] lg:mr-0">
+          <figure className="relative me-[12%] lg:me-0">
             <div data-reveal-img className="relative aspect-[560/625] overflow-hidden">
               <Image
                 src="/images/about-oasis-aerial.jpg"
-                alt="Date palm oases giving way to the dunes of the Tunisian Sahara"
+                alt={t.altMain}
                 fill
                 sizes="(min-width: 1024px) 40vw, 90vw"
                 className="object-cover"
@@ -44,12 +45,12 @@ export function Origin() {
             </div>
             <div
               data-parallax="-90"
-              className="absolute top-[69%] left-[67.3%] w-[41.8%] border-[10px] border-cream"
+              className="absolute top-[69%] start-[67.3%] w-[41.8%] border-[10px] border-cream"
             >
               <div className="relative aspect-[234/277] overflow-hidden">
                 <Image
                   src="/images/origin-harvest-in-hand.jpg"
-                  alt="A grower's hands holding a freshly harvested strand of Deglet Nour dates"
+                  alt={t.altInset}
                   fill
                   sizes="(min-width: 1024px) 17vw, 40vw"
                   className="object-cover"
@@ -61,31 +62,27 @@ export function Origin() {
           </figure>
 
           <div className="lg:col-start-3 lg:pt-[18px]">
-            <p data-fade className="eyebrow tracking-[2px]">02 / About us</p>
+            <p data-fade className="eyebrow tracking-[2px]">{t.eyebrow}</p>
             <SplitLines
               id="about-title"
-              className="t-h2 mt-8 -ml-[5px] lg:mt-[50px]"
-              lines={["A Tunisian company,", "dedicated to dates."]}
+              className="t-h2 mt-8 -ms-[5px] lg:mt-[50px]"
+              lines={t.title}
             />
-            <p data-fade className="t-lede mt-8 lg:mt-[41px]">From the producer’s palm to the importer’s warehouse.</p>
+            <p data-fade className="t-lede mt-8 lg:mt-[41px]">{t.lede}</p>
             <div className="mt-8 max-w-[495px] space-y-[35px] text-[15px] leading-[28.8px] text-muted md:text-[16px] lg:mt-[36px]">
-              <p data-fade>
-                Hsoumi Dates is a Tunisian company specialised in the collection, sorting, processing,
-                packaging, storage and export of Tunisian dates.
-              </p>
-              <p data-fade>
-                We collect dates from Tunisian producers and bring every lot through a controlled chain —
-                reception, selection, grading, inspection, packing and storage — preparing each order to
-                the specifications of professional buyers abroad.
-              </p>
+              {t.copy.map((para) => (
+                <p key={para} data-fade>
+                  {para}
+                </p>
+              ))}
             </div>
-            <p data-fade className="t-lede mt-12 lg:mt-[65px]">Tunisian dates, handled with care from palm to port.</p>
+            <p data-fade className="t-lede mt-12 lg:mt-[65px]">{t.closing}</p>
           </div>
         </div>
 
         <div className="caption mt-24 flex flex-wrap justify-between gap-4 text-muted lg:mt-[109px]">
-          <span>Tunisian oases&nbsp;&nbsp;/&nbsp;&nbsp;Home of Deglet Nour</span>
-          <span className="tracking-normal lg:w-[300px]">Hsoumi Dates — About us</span>
+          <span>{t.footLeft}</span>
+          <span className="tracking-normal lg:w-[300px]">{t.footRight}</span>
         </div>
       </div>
     </section>

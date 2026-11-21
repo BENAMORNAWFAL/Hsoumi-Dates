@@ -37,9 +37,14 @@ export function revealOnEnter(scope: Element, start = "top 86%") {
   q("[data-reveal-img]").forEach((el) => {
     // Scale the photograph's wrapper when it carries journey markers, so they stay aligned.
     const img = el.querySelector("[data-reveal-scale]") ?? el.querySelector("img");
+    // A photograph the travelling date lands in reveals with the scroll itself,
+    // so it is fully open by the time the page (and the date) comes to rest.
+    const landing = !!el.querySelector("[data-journey-stop]");
     const tl = gsap.timeline({
-      scrollTrigger: { trigger: el, start: "top 85%", once: true },
-      delay: Number((el as HTMLElement).dataset.revealImg || 0),
+      scrollTrigger: landing
+        ? { trigger: el, start: "top bottom", end: "top 72%", scrub: 0.5 }
+        : { trigger: el, start: "top 85%", once: true },
+      delay: landing ? 0 : Number((el as HTMLElement).dataset.revealImg || 0),
     });
     tl.fromTo(
       el,

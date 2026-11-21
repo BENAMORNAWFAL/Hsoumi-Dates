@@ -5,32 +5,11 @@ import { useRef } from "react";
 import { gsap, MQ, useGSAP } from "@/lib/gsap";
 import { parallax, revealOnEnter } from "@/lib/reveal";
 import { SplitLines } from "@/components/ui/SplitLines";
-
-const PRINCIPLES = [
-  {
-    title: "Selection at reception",
-    copy: "Each lot is checked on arrival so that only suitable fruit moves forward.",
-  },
-  {
-    title: "Sorting & grading",
-    copy: "Dates are separated by quality, size and variety to build consistent lots.",
-  },
-  {
-    title: "Inspection",
-    copy: "Visual inspection during preparation removes fruit that does not meet the required standard.",
-  },
-  {
-    title: "Hygiene",
-    copy: "Clean handling, clean equipment and protective wear throughout processing and packing.",
-  },
-  {
-    title: "Preservation",
-    copy: "Packing and storage conditions chosen to protect texture, flavour and appearance.",
-  },
-];
+import { JourneyStop } from "@/components/ui/JourneyStop";
+import type { Dictionary } from "@/i18n/config";
 
 /** 06 — Our quality. States practices only; no certifications are claimed. */
-export function Quality() {
+export function Quality({ t }: { t: Dictionary["quality"] }) {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -57,34 +36,35 @@ export function Quality() {
           <div data-reveal-img className="relative aspect-[520/600] overflow-hidden">
             <div data-reveal-scale className="absolute inset-0">
               <Image
-                src="/images/process-quality.jpg"
-                alt="A date held between gloved fingers for visual inspection"
+                src="/images/process-quality-deglet-nour-clean.jpg"
+                alt={t.alt}
                 fill
                 sizes="(min-width: 1024px) 38vw, 90vw"
                 className="object-cover object-[60%_50%]"
               />
+              {/* Journey stop: the date held up for inspection. */}
+              <JourneyStop id="quality" />
             </div>
           </div>
           <figcaption className="caption mt-4 flex justify-between text-muted">
-            <span>Inspection</span>
-            <span>Illustrative photography</span>
+            <span>{t.captionLeft}</span>
+            <span>{t.illustrative}</span>
           </figcaption>
         </figure>
 
         <div className="lg:col-start-3">
-          <p data-fade className="eyebrow">06 / Our quality</p>
+          <p data-fade className="eyebrow">{t.eyebrow}</p>
           <SplitLines
             id="quality-title"
-            className="t-h2 mt-8 -ml-[4px] lg:mt-[40px]"
-            lines={["Quality is built in,", "step by step."]}
+            className="t-h2 mt-8 -ms-[4px] lg:mt-[40px]"
+            lines={t.title}
           />
           <p data-fade className="mt-8 max-w-[540px] text-[15px] leading-[28.8px] text-muted md:text-[16px]">
-            Quality is not a single check at the end of the line. It depends on how the fruit is selected,
-            handled, packed and kept at every stage — from the producer to the container.
+            {t.intro}
           </p>
 
           <ol className="mt-12 border-t border-line">
-            {PRINCIPLES.map((p, i) => (
+            {t.principles.map((p, i) => (
               <li
                 key={p.title}
                 data-fade={i * 0.05}
@@ -98,8 +78,7 @@ export function Quality() {
           </ol>
 
           <p data-fade className="mt-8 max-w-[540px] text-[13px] leading-[22.1px] text-muted">
-            Product specifications, documentation and labelling requirements are discussed with each client
-            according to the regulations of the destination market.
+            {t.note}
           </p>
         </div>
       </div>

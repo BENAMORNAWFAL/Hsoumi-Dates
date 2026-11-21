@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { ScrollTrigger } from "@/lib/gsap";
+import { fullPage } from "@/lib/fullpage";
 
 /** Recalculate every scroll scene once web fonts and images have settled the layout. */
 export function ScrollRefresh() {
@@ -10,7 +11,7 @@ export function ScrollRefresh() {
     document.fonts?.ready.then(refresh);
     window.addEventListener("load", refresh);
 
-    // Anchor links: jump past pinned scenes reliably.
+    // Anchor links: jump past pinned scenes reliably (to the section's first screen in full-page mode).
     const onClick = (e: MouseEvent) => {
       const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]');
       if (!a) return;
@@ -20,7 +21,7 @@ export function ScrollRefresh() {
       e.preventDefault();
       const st = target ? ScrollTrigger.getAll().find((t) => t.pin === target) : null;
       const y = id === "top" || !target ? 0 : st ? st.start : target.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: y, behavior: "smooth" });
+      if (!fullPage.goTo(y)) window.scrollTo({ top: y, behavior: "smooth" });
     };
     document.addEventListener("click", onClick);
 

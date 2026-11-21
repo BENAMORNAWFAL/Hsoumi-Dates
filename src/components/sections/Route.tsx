@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { gsap, MQ, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import type { ExportGlobe } from "@/three/ExportGlobe";
+import type { Dictionary } from "@/i18n/config";
 
 /* -------------------------------------------------------------------------- */
 /*  World coordinates (SVG units). Ground at y=640, sea level at y=700.        */
@@ -28,18 +29,15 @@ const CRATES = [
   { x: 136, y: -108 },
 ];
 
-const STEPS = [
-  { title: "Packed & loaded", copy: "Packed cartons are loaded into the container at our facility.", at: 0 },
-  { title: "On the road", copy: "Overland transport from our facility to the Tunisian coast.", at: 2.8 },
-  { title: "At the port", copy: "The container is handed over and lifted aboard for shipment.", at: 5.2 },
-  { title: "Across the sea", copy: "Sea freight to professional buyers in international markets.", at: 7.5 },
-  { title: "To your market", copy: "Authentic Tunisian dates, delivered to the agreed destination.", at: 9.0 },
-];
+/** Timeline position of each stage; titles and copy come from the dictionary (same order). */
+const STEPS = [{ at: 0 }, { at: 2.8 }, { at: 5.2 }, { at: 7.5 }, { at: 9.0 }];
 const TOTAL = 10;
 /** Pin progress at which the travelling date rests on the crates, as the container doors close. */
 const CRATE_REST = 2.62 / TOTAL;
+/** Screens: crates loaded · truck at the port · container aboard · at sea · the globe. */
+const SCREENS = [CRATE_REST, 5.2 / TOTAL, 7.4 / TOTAL, 8.8 / TOTAL, 1].join(",");
 
-export function Route() {
+export function Route({ t: copy }: { t: Dictionary["route"] }) {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -216,6 +214,7 @@ export function Route() {
       id="journey"
       data-nav="dark"
       data-journey-pin
+      data-fp-steps={SCREENS}
       className="relative h-[100svh] min-h-[560px] overflow-hidden bg-olive text-cream"
       aria-labelledby="route-title"
     >
@@ -225,7 +224,7 @@ export function Route() {
         viewBox="0 0 1600 1000"
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label="Illustration: crates of dates are loaded onto a truck, driven to the port, lifted onto a cargo ship and carried across the sea."
+        aria-label={copy.illustration}
         fill="none"
         stroke="#f3ede1"
         strokeWidth={1.6}
@@ -390,11 +389,7 @@ export function Route() {
       <div
         aria-hidden
         data-route-scrim
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 60% at 0% 0%, rgba(52,61,47,0.97) 50%, rgba(52,61,47,0) 100%), linear-gradient(0deg, rgba(52,61,47,0.95) 0%, rgba(52,61,47,0) 22%)",
-        }}
+        className="route-scrim pointer-events-none absolute inset-0"
       />
 
       {/* Globe finale */}
@@ -403,14 +398,14 @@ export function Route() {
       {/* Copy overlay */}
       <div className="shell pointer-events-none relative flex h-full flex-col justify-between pt-24 pb-8 lg:pt-[120px] lg:pb-[40px]">
         <div>
-          <p className="eyebrow text-parchment">07 / Export &amp; global reach&nbsp;&nbsp;—&nbsp;&nbsp;The route</p>
+          <p className="eyebrow text-parchment">{copy.eyebrow}</p>
           <h2 id="route-title" className="sr-only">
-            How an order of Hsoumi Dates travels from our facility to international markets
+            {copy.title}
           </h2>
           <div className="relative mt-6 h-[150px] max-w-[620px] md:h-[170px] lg:mt-[34px]">
-            {STEPS.map((st, i) => (
+            {copy.steps.map((st, i) => (
               <div
-                key={st.title}
+                key={i}
                 data-step-caption
                 className={`absolute inset-0 transition-[opacity,transform] duration-700 ease-out [&:not(.is-active)]:translate-y-4 [&:not(.is-active)]:opacity-0 ${i === 0 ? "is-active" : ""}`}
               >
@@ -423,17 +418,17 @@ export function Route() {
 
         <div>
           <p data-markets className="caption invisible mb-6 max-w-[520px] tracking-[2px] text-gold">
-            From Tunisia&nbsp;&nbsp;·&nbsp;&nbsp;To professional buyers in international markets
+            {copy.markets}
           </p>
-          <ol className="grid grid-cols-5 gap-2 md:gap-4" aria-label="Journey stages">
-            {STEPS.map((st, i) => (
+          <ol className="grid grid-cols-5 gap-2 md:gap-4" aria-label={copy.stages}>
+            {copy.steps.map((st, i) => (
               <li
-                key={st.title}
+                key={i}
                 data-step-tick
                 className={`group caption border-t border-cream/20 pt-3 text-cream/45 transition-colors duration-500 [&.is-done]:border-gold [&.is-done]:text-cream ${i === 0 ? "is-done" : ""}`}
               >
                 <span className="tabular-nums">0{i + 1}</span>
-                <span className="ml-3 hidden md:inline">{st.title}</span>
+                <span className="ms-3 hidden md:inline">{st.title}</span>
               </li>
             ))}
           </ol>

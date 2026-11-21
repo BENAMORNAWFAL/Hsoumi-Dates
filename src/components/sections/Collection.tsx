@@ -6,47 +6,19 @@ import { gsap, MQ, useGSAP } from "@/lib/gsap";
 import { revealOnEnter } from "@/lib/reveal";
 import { Button } from "@/components/ui/Button";
 import { ProductCard, type Product } from "@/components/ui/ProductCard";
+import type { Dictionary } from "@/i18n/config";
 
-const PRODUCTS: Product[] = [
-  {
-    category: "Branched dates",
-    title: "Deglet Nour",
-    description:
-      "Kept on their natural strands — the traditional presentation of Tunisia’s signature variety, prized for premium retail and gifting.",
-    formats: "Boxed formats on request",
-    img: "/images/product-deglet-nour-branch.jpg",
-    alt: "A strand of Deglet Nour dates on the branch, resting on a travertine block",
-    stop: "selection",
-  },
-  {
-    category: "Pitted dates",
-    title: "Deglet Nour",
-    description:
-      "Carefully pitted Deglet Nour for retail, food service and food-industry customers.",
-    formats: "Retail and bulk formats on request",
-    img: "/images/product-deglet-nour-pitted.jpg",
-    alt: "Pitted Deglet Nour dates in a dark ceramic dish",
-  },
-  {
-    category: "Other varieties",
-    title: "Tunisian varieties",
-    description:
-      "Other traditional Tunisian date varieties, subject to season and availability.",
-    formats: "Availability on request",
-    img: "/images/product-kenta.jpg",
-    alt: "A pyramid of golden Tunisian dates on a stone plinth",
-  },
-];
-
-const FORMATS = [
-  { title: "Consumer packs", copy: "Retail-ready packs for supermarkets and specialist shops." },
-  { title: "Gift boxes", copy: "Presentation boxes for branched and premium dates." },
-  { title: "Bulk cartons", copy: "Cartons for distributors, food service and food industry." },
+/** Photographs and journey stops per product; copy comes from the dictionary (same order). */
+const PRODUCT_MEDIA: Pick<Product, "img" | "stop">[] = [
+  { img: "/images/product-deglet-nour-branch.jpg", stop: "selection" },
+  { img: "/images/product-deglet-nour-pitted.jpg" },
+  { img: "/images/product-kenta.jpg" },
 ];
 
 /** 04 — Our products. */
-export function Collection() {
+export function Collection({ t }: { t: Dictionary["products"] }) {
   const root = useRef<HTMLElement>(null);
+  const products: Product[] = PRODUCT_MEDIA.map((m, i) => ({ ...m, ...t.items[i] }));
 
   useGSAP(
     () => {
@@ -81,17 +53,16 @@ export function Collection() {
       aria-labelledby="products-title"
     >
       <div className="shell">
-        <p data-fade className="eyebrow">04 / Our products</p>
-        <h2 id="products-title" className="t-h1 mt-6 -ml-[4px] lg:mt-[24px] lg:!text-[clamp(2.6rem,5vw,4.5rem)]">
-          <span className="line-mask"><span data-line>Tunisian dates, led by Deglet Nour.</span></span>
+        <p data-fade className="eyebrow">{t.eyebrow}</p>
+        <h2 id="products-title" className="t-h1 mt-6 -ms-[4px] lg:mt-[24px] lg:!text-[clamp(2.6rem,5vw,4.5rem)]">
+          <span className="line-mask"><span data-line>{t.title}</span></span>
         </h2>
         <p data-fade className="mt-5 max-w-[860px] text-[15px] leading-[27.2px] text-muted md:text-[16px] lg:mt-[22px]">
-          Deglet Nour — the “date of light” — is Tunisia’s signature variety: translucent, honey-toned and
-          delicately sweet. We supply it in the presentations professional buyers ask for.
+          {t.intro}
         </p>
 
         <div className="mt-14 grid gap-x-[25px] gap-y-16 sm:grid-cols-2 lg:mt-[59px] lg:grid-cols-3">
-          {PRODUCTS.map((p, i) => (
+          {products.map((p, i) => (
             <div key={p.img} data-variety>
               <ProductCard product={p} delay={i * 0.12} />
             </div>
@@ -104,20 +75,20 @@ export function Collection() {
             <div data-reveal-img className="relative aspect-square w-[120px] shrink-0 overflow-hidden">
               <Image
                 src="/images/facility-export-cartons.jpg"
-                alt="Plain cardboard cartons and packing materials (illustrative photograph)"
+                alt={t.packagingAlt}
                 fill
                 sizes="120px"
                 className="object-cover"
               />
             </div>
             <div>
-              <p data-fade className="eyebrow text-muted">Packaging formats</p>
-              <p data-fade className="mt-3 font-serif text-[28px] leading-[1.05]">Packed to your specification.</p>
+              <p data-fade className="eyebrow text-muted">{t.packagingEyebrow}</p>
+              <p data-fade className="mt-3 font-serif text-[28px] leading-[1.05]">{t.packagingTitle}</p>
             </div>
           </div>
           <div>
             <ul className="grid gap-6 sm:grid-cols-3">
-              {FORMATS.map((f) => (
+              {t.formats.map((f) => (
                 <li key={f.title} data-fade>
                   <p className="font-serif text-[22px] leading-[1.1]">{f.title}</p>
                   <p className="mt-2 text-[13px] leading-[22.1px] text-muted">{f.copy}</p>
@@ -125,15 +96,15 @@ export function Collection() {
               ))}
             </ul>
             <p data-fade className="mt-6 text-[13px] leading-[22.1px] text-muted">
-              Formats, net weights and labelling are agreed with each client according to the destination market.
+              {t.formatsNote}
             </p>
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:justify-between lg:mt-[48px] lg:pr-[68px]">
-          <p data-fade className="font-serif text-[28px] leading-[29.4px]">Whole fruit. Consistent quality.</p>
+        <div className="mt-16 flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:justify-between lg:mt-[48px] lg:pe-[68px]">
+          <p data-fade className="font-serif text-[28px] leading-[29.4px]">{t.closing}</p>
           <div data-fade>
-            <Button href="#contact" variant="chocolate">Request product specifications</Button>
+            <Button href="#contact" variant="chocolate">{t.cta}</Button>
           </div>
         </div>
       </div>

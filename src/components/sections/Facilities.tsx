@@ -6,31 +6,21 @@ import { gsap, MQ, useGSAP } from "@/lib/gsap";
 import { revealOnEnter } from "@/lib/reveal";
 import { SplitLines } from "@/components/ui/SplitLines";
 import { JourneyStop } from "@/components/ui/JourneyStop";
+import type { Dictionary } from "@/i18n/config";
 
+/** Photograph per operation; copy comes from the dictionary (same order). */
 const OPERATIONS = [
   {
-    title: "Sorting lines",
-    copy: "Dates are cleaned, sorted and graded by quality, size and variety.",
     img: "/images/process-cleaning.jpg",
-    alt: "Dates moving along a stainless-steel cleaning and sorting line",
   },
   {
-    title: "Packaging operations",
-    copy: "Industrial packing and labelling in the formats each order requires.",
     img: "/images/facility-export-cartons.jpg",
-    alt: "Cartons and packing materials ready for packaging (illustrative photograph)",
   },
   {
-    title: "Storage",
-    copy: "Packed dates are kept in appropriate storage conditions until dispatch.",
     img: "/images/facility-storage.jpg",
-    alt: "Palletised cartons on warehouse racking (illustrative photograph)",
   },
   {
-    title: "Export order preparation",
-    copy: "Orders are assembled, palletised and prepared for loading.",
     img: "/images/export-by-road.jpg",
-    alt: "A loaded truck leaving for the port",
   },
 ];
 
@@ -39,9 +29,11 @@ const START = 0.5;
 const STEP = 0.9;
 const TOTAL = START + STEP * OPERATIONS.length;
 const LINE_REST = 0.9 / TOTAL;
+/** One screen per operation (each fully active), then the end of the scene. */
+const SCREENS = [LINE_REST, ...[1, 2].map((i) => (START + i * STEP + 0.4) / TOTAL), 1].join(",");
 
 /** 05 — Our facilities. */
-export function Facilities() {
+export function Facilities({ t }: { t: Dictionary["facilities"] }) {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -104,36 +96,36 @@ export function Facilities() {
       id="facilities"
       data-nav="dark"
       data-journey-pin
+      data-fp-steps={SCREENS}
       className="relative overflow-hidden bg-brown py-24 text-cream lg:flex lg:min-h-[100svh] lg:items-center lg:py-[64px]"
       aria-labelledby="facilities-title"
     >
       <div className="shell grid w-full gap-14 lg:grid-cols-[minmax(0,587fr)_minmax(0,693fr)] lg:gap-0">
-        <div className="lg:pt-[12px] lg:pr-10">
+        <div className="lg:pt-[12px] lg:pe-10">
           <div data-fac-head>
-            <p data-fade className="eyebrow">05 / Our facilities</p>
+            <p data-fade className="eyebrow">{t.eyebrow}</p>
             <SplitLines
               id="facilities-title"
-              className="t-h1 mt-8 -ml-[4px] lg:mt-[40px] lg:!text-[clamp(2.6rem,4.6vw,4.4rem)]"
-              lines={["Where the harvest", "becomes an", "export order."]}
+              className="t-h1 mt-8 -ms-[4px] lg:mt-[40px] lg:!text-[clamp(2.6rem,4.6vw,4.4rem)]"
+              lines={t.title}
             />
             <p data-fade className="mt-8 max-w-[480px] text-[15px] leading-[27.2px] text-parchment md:text-[16px] lg:mt-[32px]">
-              Our activity brings together the operations needed to receive, prepare, keep and ship dates
-              at a professional scale.
+              {t.intro}
             </p>
           </div>
 
           <ol className="mt-12 space-y-[26px] lg:mt-[44px]">
             {OPERATIONS.map((op, i) => (
-              <li key={op.title} data-op data-fade className="relative grid grid-cols-[53px_1fr]">
+              <li key={op.img} data-op data-fade className="relative grid grid-cols-[53px_1fr]">
                 <span
                   data-op-bar
                   aria-hidden
-                  className="absolute top-[2px] -left-[16px] hidden h-[46px] w-px origin-top bg-gold-deep lg:block"
+                  className="absolute top-[2px] -start-[16px] hidden h-[46px] w-px origin-top bg-gold-deep lg:block"
                 />
                 <span className="pt-[3px] text-[11px] leading-[18.7px] text-gold-deep">0{i + 1}</span>
                 <div>
-                  <h3 className="font-serif text-[25px] leading-[25.5px]">{op.title}</h3>
-                  <p className="mt-[9px] text-[12px] leading-[20.4px] text-parchment">{op.copy}</p>
+                  <h3 className="font-serif text-[25px] leading-[25.5px]">{t.operations[i].title}</h3>
+                  <p className="mt-[9px] text-[12px] leading-[20.4px] text-parchment">{t.operations[i].copy}</p>
                 </div>
               </li>
             ))}
@@ -146,13 +138,13 @@ export function Facilities() {
             {OPERATIONS.map((op, i) => (
               <div key={op.img} data-op-shot className="absolute inset-0 overflow-hidden">
                 <div data-reveal-scale className="absolute inset-0">
-                  <Image src={op.img} alt={op.alt} fill sizes="48vw" className="object-cover" />
+                  <Image src={op.img} alt={t.operations[i].alt} fill sizes="48vw" className="object-cover" />
                   {i === 0 && <JourneyStop id="line" frac={LINE_REST} />}
                 </div>
               </div>
             ))}
           </div>
-          <figcaption className="caption mt-4 text-parchment/70">Illustrative photography</figcaption>
+          <figcaption className="caption mt-4 text-parchment/70">{t.illustrative}</figcaption>
         </figure>
 
         {/* Mobile & tablet: all four operations as a grid. */}
@@ -160,12 +152,12 @@ export function Facilities() {
           {OPERATIONS.map((op, i) => (
             <div key={op.img} data-reveal-img={i * 0.08} className="relative aspect-[4/3] overflow-hidden">
               <div data-reveal-scale className="absolute inset-0">
-                <Image src={op.img} alt={op.alt} fill sizes="45vw" className="object-cover" />
+                <Image src={op.img} alt={t.operations[i].alt} fill sizes="45vw" className="object-cover" />
                 {i === 0 && <JourneyStop id="line" />}
               </div>
             </div>
           ))}
-          <p className="caption col-span-2 mt-1 text-parchment/70">Illustrative photography</p>
+          <p className="caption col-span-2 mt-1 text-parchment/70">{t.illustrative}</p>
         </div>
       </div>
     </section>

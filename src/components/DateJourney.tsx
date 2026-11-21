@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef } from "react";
-import { gsap, MQ, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { gsap, MQ, useGSAP } from "@/lib/gsap";
 import { JOURNEY, STOPS, type StopId, type StopSpec } from "@/lib/journey";
+import { computeSnaps, pinOf, snapShowing } from "@/lib/fullpage";
 
 const SPR = JOURNEY.sprite;
 /** Hero: scroll distances (× viewport height) from the top of the page. */
@@ -10,7 +11,7 @@ const TREMBLE_FROM = 0.06;
 const RELEASE_AT = 0.42;
 
 /** The company process, in scroll order. */
-const ORDER: StopId[] = ["harvest", "sorting", "inspection", "selection", "line", "container"];
+const ORDER: StopId[] = ["harvest", "cutting", "sorting", "inspection", "selection", "line", "quality", "container"];
 
 type Grade = { bright: number; contrast: number; sat: number; blur: number };
 const NATURAL: Grade = { bright: 1, contrast: 1, sat: 1, blur: 0 };
@@ -20,12 +21,21 @@ const PHOTO: Grade = { bright: 1.1, contrast: 0.86, sat: 1.1, blur: 0.25 };
 type Stop = {
   id: StopId;
   el: Element;
+  /** Scroll position where the date has landed… */
   at: number;
+  /** …and until which it stays (a pinned scene can hold it over several screens). */
+  end: number;
   hold: number;
   angle: number;
   /** Width ÷ length scale factor relative to the sprite. */
   plump: number;
   grade: Grade;
+  /** Lands on a real date in a photograph and melts into it. */
+  merge: boolean;
+  /** Leaves by flying straight to the next stop (it is on the very next screen). */
+  fly: boolean;
+  /** Screens without dates come first: it drops back in from this scroll position. */
+  entry: number | null;
 };
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
@@ -63,11 +73,17 @@ function findStop(id: StopId) {
 /**
  * One Deglet Nour travels the whole Hsoumi Dates process.
  *
- * It hangs in the hero bunch, lets go, falls into the grower's hand, then moves
- * through sorting, inspection, product selection and the cleaning line before it
- * settles on the crates in the export container — the doors close, and the
- * truck and ship carry it on. Every stop is a live marker inside a real
- * photograph, so pins, parallax and responsive layouts are followed exactly.
+ * It hangs in the hero bunch, lets go and falls into the grower's hands, then
+ * follows the company process — the harvest, the sorting table, inspection, the
+ * product range, the cleaning line, quality control — until it rests on the
+ * crates in the export container and the doors close.
+ *
+ * Every stop is a real date in a photograph (a live marker measured on it) and
+ * sits on a full-page screen. The date lands exactly on that date and melts into
+ * it. When the next screen shows the next stop, it lifts out and flies there in
+ * the same movement as the page; when screens without dates lie in between, it
+ * stays with its photograph and drops back in from above on the next screen
+ * that shows dates.
  */
 export function DateJourney() {
   const root = useRef<HTMLDivElement>(null);
@@ -89,47 +105,63 @@ export function DateJourney() {
       layer.style.visibility = "visible";
       const journey = { p: 0 };
       let stops: Stop[] = [];
-      const ref: { master?: ScrollTrigger } = {};
 
-      /** Resolve each stop's resting scroll position (called on every refresh). */
+      /** Resolve each stop's resting scroll position from the page's screens (on every refresh). */
       const computeStops = () => {
         const vh = window.innerHeight;
+        const snaps = computeSnaps();
+        const hold = Math.min(vh * 0.05, 60);
         const list: Stop[] = [];
         for (const id of ORDER) {
           const el = findStop(id);
           if (!el) continue;
+          const prev = list[list.length - 1];
+          const after = prev ? prev.end + 1 : RELEASE_AT * vh;
           const pinRoot = el.closest("[data-journey-pin]");
+          const pinST = pinRoot ? pinOf(pinRoot) : undefined;
           const frac = el.getAttribute("data-journey-frac");
-          const pinST = pinRoot
-            ? ScrollTrigger.getAll().find((t) => t !== ref.master && t.pin === pinRoot)
-            : undefined;
           let at: number;
-          let hold: number;
+          let end: number;
           if (pinST && frac !== null) {
             const span = pinST.end - pinST.start;
+            const fracEnd = el.getAttribute("data-journey-frac-end");
             at = pinST.start + Number(frac) * span;
-            hold = Math.min(Math.max(span * 0.03, 30), 110);
+            end = fracEnd !== null ? pinST.start + Number(fracEnd) * span : at;
           } else {
-            const r = el.getBoundingClientRect();
-            at = r.top + window.scrollY + r.height / 2 - vh * 0.55;
-            hold = vh * 0.1;
+            // The screen that presents this photograph best.
+            const y = snapShowing(el, snaps, after);
+            if (y === null) continue;
+            at = end = y;
           }
-          const prev = list[list.length - 1];
-          const floor = prev ? prev.at + prev.hold + hold + 60 : RELEASE_AT * vh + hold + vh * 0.5;
+          if (at <= after) continue;
           const spec: StopSpec | null = id === "container" ? null : STOPS[id];
           list.push({
             id,
             el,
-            at: Math.max(at, floor),
+            at,
+            end,
             hold,
             angle: spec ? spec.angle : 180,
             plump: (spec?.plump ?? SPR.ratio) / SPR.ratio,
-            grade: id === "container" ? NATURAL : { ...PHOTO, blur: PHOTO.blur + (spec?.soften ?? 0) },
+            grade: spec
+              ? { ...PHOTO, bright: PHOTO.bright * (spec.tone ?? 1), blur: PHOTO.blur + (spec.soften ?? 0) }
+              : NATURAL,
+            merge: spec !== null,
+            fly: false,
+            entry: null,
           });
         }
+        // How each stop is reached: straight from the previous one, or back in from above.
+        list.forEach((stop, i) => {
+          const prev = list[i - 1];
+          if (!prev) return;
+          const between = snaps.filter((y) => y > prev.end + 2 && y < stop.at - 2);
+          if (between.length) stop.entry = between[between.length - 1];
+          else prev.fly = true;
+        });
         stops = list;
         const last = stops[stops.length - 1];
-        return last ? last.at + last.hold : vh * 2;
+        return last ? last.end + last.hold : vh * 2;
       };
 
       // Master timeline: the whole journey is one scrubbed progress value.
@@ -139,12 +171,12 @@ export function DateJourney() {
           trigger: heroBox,
           start: "top top",
           end: () => computeStops(),
-          scrub: 1.2,
+          scrub: 0.6,
           invalidateOnRefresh: true,
         },
       });
       tl.to(journey, { p: 1, ease: "none", duration: 1 });
-      ref.master = tl.scrollTrigger!;
+      const master = tl.scrollTrigger!;
 
       const shadeOnStart = () => {
         const mobileShade = window.matchMedia("(max-width: 767px)").matches;
@@ -152,28 +184,28 @@ export function DateJourney() {
         return (mobileShade ? 0.5 : 0.1) * opacity;
       };
 
-      let last = { x: 0, y: 0 };
+      let last: { x: number; y: number } | null = null;
       let hidden = false;
       const hide = () => {
         if (!hidden) layer.style.opacity = "0";
         hidden = true;
+        last = null;
       };
 
       const render = () => {
-        const st = ref.master!;
         const vw = window.innerWidth;
         const vh = window.innerHeight;
-        const s = st.start + journey.p * (st.end - st.start);
+        const s = master.start + journey.p * (master.end - master.start);
         const t = performance.now() / 1000;
         const releasePx = RELEASE_AT * vh;
 
         // --- Where are we in the journey? ---------------------------------------
-        const k = stops.findIndex((stop) => s < stop.at + stop.hold);
+        const k = stops.findIndex((stop) => s < stop.end + stop.hold);
         if (k === -1) return hide();
         const stop = stops[k];
         const resting = s >= stop.at - stop.hold;
-        if (hidden) layer.style.opacity = "1";
-        hidden = false;
+        // Screens without dates: the date is not on screen.
+        if (!resting && stop.entry !== null && s < stop.entry) return hide();
 
         const B = stop.el.getBoundingClientRect();
         const Bc = center(B);
@@ -186,7 +218,6 @@ export function DateJourney() {
         let grade: Grade;
         let w = 1; // leg progress (1 = at rest)
         let fromHero = false;
-        let park = 0;
         let darken = 0;
         let opacity = 1;
 
@@ -196,15 +227,23 @@ export function DateJourney() {
           angle = stop.angle;
           plump = stop.plump;
           grade = stop.grade;
-          // Final stop: the container doors close over it.
-          if (stop.id === "container") opacity = 1 - smooth(stop.at, stop.at + stop.hold, s);
+          if (stop.merge) {
+            // Settles onto the real date and becomes it; lifts back out only to fly on.
+            opacity = 1 - smooth(stop.at - stop.hold, stop.at, s);
+            if (stop.fly) opacity = Math.max(opacity, smooth(stop.end, stop.end + stop.hold, s));
+          } else {
+            // Final stop: the container doors close over it.
+            opacity = 1 - smooth(stop.end, stop.end + stop.hold, s);
+          }
         } else {
-          // Leg from the previous stop (or the palm) to this one.
           fromHero = k === 0;
           const prev = fromHero ? null : stops[k - 1];
-          const departAt = prev ? prev.at + prev.hold : releasePx;
+          const reentry = !fromHero && stop.entry !== null;
+          const departAt = fromHero ? releasePx : reentry ? stop.entry! : prev!.end + prev!.hold;
           const arriveAt = stop.at - stop.hold;
           const legPx = Math.max(1, arriveAt - departAt);
+          const tLeg = clamp01((s - departAt) / legPx);
+          w = easeInOut(tLeg);
 
           let A: { x: number; y: number };
           let LA: number;
@@ -213,7 +252,7 @@ export function DateJourney() {
           let gradeA = NATURAL;
 
           if (fromHero) {
-            // --- Scenes 1–2: hanging, swaying, trembling, letting go -----------
+            // --- Hanging, swaying, trembling, letting go -------------------------
             const detach = clamp01((s - TREMBLE_FROM * vh) / ((RELEASE_AT - TREMBLE_FROM) * vh));
             const sr = startEl.getBoundingClientRect();
             const S = center(sr);
@@ -230,7 +269,16 @@ export function DateJourney() {
               y: S.y - LA / 2 + detach * LA * 0.18 + Math.sin(rad) * (LA / 2) - Math.min(0, heroTop),
             };
             darken = shadeOnStart();
+          } else if (reentry) {
+            // --- Back in from just above the screen, towards the next real date ----
+            LA = Math.max(LB * 1.2, 36);
+            const side = Bc.x > vw / 2 ? -1 : 1;
+            A = { x: Bc.x + side * Math.min(vw * 0.12, 160), y: -LA };
+            angA = stop.angle - 200;
+            plumpA = stop.plump;
+            opacity = smooth(0, 0.18, tLeg);
           } else {
+            // --- Straight from the previous stop: it lifts out of its photograph ----
             const ar = prev!.el.getBoundingClientRect();
             A = center(ar);
             LA = ar.width;
@@ -238,9 +286,6 @@ export function DateJourney() {
             plumpA = prev!.plump;
             gradeA = prev!.grade;
           }
-
-          const tLeg = clamp01((s - departAt) / legPx);
-          w = easeInOut(tLeg);
 
           // Path: from A to B with a gentle bow.
           const dx = Bc.x - A.x;
@@ -252,33 +297,26 @@ export function DateJourney() {
           // Size: swells towards the camera mid-leg.
           const peak = fromHero
             ? Math.min(Math.max(Math.min(vw, vh) * 0.34, 120), 320)
-            : Math.min(Math.max(Math.max(LA, LB) * 1.7, 40), 130);
+            : Math.min(Math.max(Math.max(LA, LB) * 1.7, 48), 150);
           len = swell(LA, LB, peak, w);
 
-          // Long legs cross whole sections: wait in the margin instead of covering the copy.
-          if (!fromHero && legPx > vh * 2.2) {
-            const ramp = Math.min(0.45, Math.max(0.12, (vh * 0.9) / legPx)); // ~0.9 viewport of scroll each way
-            park = smooth(0, ramp, tLeg) * smooth(0, ramp, 1 - tLeg);
-            const mobile = vw < 768;
-            const spot = { x: vw - (mobile ? 16 : 40), y: vh * 0.52 };
-            P = { x: lerp(P.x, spot.x, park), y: lerp(P.y, spot.y, park) };
-            len = lerp(len, mobile ? 30 : 46, park);
-          }
-
           const turns = legPx > vh * 0.6 ? 360 : 0;
-          angle = lerp(angA, stop.angle + turns, w) + park * Math.sin(t * 0.8) * 10;
+          angle = lerp(angA, stop.angle + turns, w);
           plump = lerp(plumpA, stop.plump, smooth(0.6, 1, w));
           grade = mixGrade(mixGrade(gradeA, NATURAL, smooth(0, 0.3, w)), stop.grade, smooth(0.6, 1, w));
           darken *= 1 - smooth(0, 0.25, w);
         }
 
+        if (hidden) layer.style.opacity = "1";
+        hidden = false;
+
         // --- Render -------------------------------------------------------------
-        const air = resting ? 0 : Math.sin(Math.PI * w) * (1 - park);
+        const air = resting ? 0 : Math.sin(Math.PI * w);
         const scale = len / SPR.len;
         const rx = air * 26;
-        const ry = resting ? 0 : -Math.sin(2 * Math.PI * w) * 18 * (1 - park);
+        const ry = resting ? 0 : -Math.sin(2 * Math.PI * w) * 18;
 
-        const speed = Math.hypot(P.x - last.x, P.y - last.y);
+        const speed = last ? Math.hypot(P.x - last.x, P.y - last.y) : 0;
         last = P;
         const blur = (Math.min(1.6, Math.max(0, speed - 6) * 0.05) + grade.blur) / Math.max(scale, 0.05);
 

@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { gsap, MQ, useGSAP } from "@/lib/gsap";
 import { JOURNEY, placeMarker } from "@/lib/journey";
+import type { Dictionary } from "@/i18n/config";
 
 /** How long the hero holds while the camera pushes in and the date lets go (× viewport height). */
 export const HERO_HOLD = 0.9;
@@ -12,7 +13,7 @@ export const HERO_HOLD = 0.9;
 /** Portrait screens frame the palm further right (mirrors the CSS object-position rule). */
 const PORTRAIT = "(max-aspect-ratio: 9/10)";
 
-export function Hero() {
+export function Hero({ t }: { t: Dictionary["hero"] }) {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -73,14 +74,15 @@ export function Hero() {
       id="top"
       data-nav="dark"
       data-journey-hero
+      data-fp-steps="0"
       className="relative h-[100svh] min-h-[560px] w-full overflow-hidden bg-brown text-cream"
-      aria-label="Hsoumi Dates — authentic Tunisian dates"
+      aria-label={t.label}
     >
       <div data-hero-camera className="absolute inset-0 will-change-transform">
         <div data-hero-intro className="absolute inset-0">
           <Image
             src="/images/hero-sahara-palm.jpg"
-            alt="A lone date palm heavy with golden fruit at sunset in the Tunisian Sahara"
+            alt={t.alt}
             fill
             priority
             sizes="100vw"
@@ -98,27 +100,28 @@ export function Hero() {
       />
 
       <div className="shell absolute inset-x-0 bottom-[96px] md:bottom-[110px] lg:relative lg:bottom-auto lg:flex lg:h-full lg:flex-col lg:justify-center lg:pt-[100px]">
-        <div data-hero-copy className="max-w-[790px]">
-          <p data-intro className="eyebrow mb-6 pl-[3px] md:mb-[26px]">
-            Hsoumi Dates&nbsp;&nbsp;—&nbsp;&nbsp;Tunisia
+        {/* RTL keeps the copy over the shaded left side, clear of the palm (and the falling date). */}
+        <div data-hero-copy className="max-w-[790px] rtl:mr-auto">
+          <p data-intro className="eyebrow mb-6 ps-[3px] md:mb-[26px]">
+            {t.eyebrow}
           </p>
           <h1 className="t-display">
-            <span className="line-mask"><span data-line>Authentic</span></span>
-            <span className="line-mask"><span data-line>Tunisian dates.</span></span>
+            {t.title.map((line) => (
+              <span key={line} className="line-mask"><span data-line>{line}</span></span>
+            ))}
           </h1>
-          <p data-intro className="t-lede mt-6 pl-[3px] md:mt-[30px]">
-            Carefully selected. Professionally packed. Worldwide export.
+          <p data-intro className="t-lede mt-6 ps-[3px] md:mt-[30px]">
+            {t.lede}
           </p>
-          <p data-intro className="mt-4 max-w-[520px] pl-[3px] text-[15px] leading-[27.2px] md:text-[16px]">
-            Collection, sorting, packaging, storage and export of Tunisian dates for professional
-            buyers around the world.
+          <p data-intro className="mt-4 max-w-[520px] ps-[3px] text-[15px] leading-[27.2px] md:text-[16px]">
+            {t.copy}
           </p>
-          <div data-intro className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-5 pl-[3px] md:mt-[44px]">
+          <div data-intro className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-5 ps-[3px] md:mt-[44px]">
             <Button href="#expertise" variant="on-image">
-              Discover our expertise
+              {t.cta}
             </Button>
             <a href="#contact" className="text-[12px] leading-[20.4px] underline decoration-cream/40 underline-offset-[6px] transition-colors hover:decoration-cream">
-              Contact our export team
+              {t.contact}
             </a>
           </div>
         </div>
@@ -128,8 +131,8 @@ export function Hero() {
         data-hero-foot
         className="shell caption absolute inset-x-0 bottom-[30px] flex justify-between text-cream md:bottom-[33px]"
       >
-        <span data-intro className="tracking-[2px]">Scroll to explore&nbsp;&nbsp;&nbsp;&nbsp;↓</span>
-        <span data-intro className="tracking-[2px] max-sm:hidden">Deglet Nour&nbsp;&nbsp;/&nbsp;&nbsp;Tunisia</span>
+        <span data-intro className="tracking-[2px]">{t.scroll}</span>
+        <span data-intro className="tracking-[2px] max-sm:hidden">{t.foot}</span>
       </div>
     </section>
   );

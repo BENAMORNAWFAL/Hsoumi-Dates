@@ -121,6 +121,50 @@
   }
 }
 
+/* Route scene: scrim keeps the copy (top corner on the reading side) legible over the line art. */
+.route-scrim {
+  background:
+    radial-gradient(ellipse 70% 60% at 0% 0%, rgba(52, 61, 47, 0.97) 50%, rgba(52, 61, 47, 0) 100%),
+    linear-gradient(0deg, rgba(52, 61, 47, 0.95) 0%, rgba(52, 61, 47, 0) 22%);
+}
+[dir="rtl"] .route-scrim {
+  background:
+    radial-gradient(ellipse 70% 60% at 100% 0%, rgba(52, 61, 47, 0.97) 50%, rgba(52, 61, 47, 0) 100%),
+    linear-gradient(0deg, rgba(52, 61, 47, 0.95) 0%, rgba(52, 61, 47, 0) 22%);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Arabic (/ar, dir="rtl")                                                    */
+/* -------------------------------------------------------------------------- */
+[dir="rtl"] {
+  --font-serif: var(--font-amiri), "Amiri", var(--font-cormorant), Georgia, serif;
+  --font-sans: var(--font-plex-arabic), "IBM Plex Sans Arabic", var(--font-manrope), system-ui, sans-serif;
+}
+/* Latin marks inside the Arabic page (logo, wordmark, email) keep the brand's Latin faces. */
+[dir="rtl"] [dir="ltr"] {
+  --font-serif: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-manrope), "Manrope", system-ui, sans-serif;
+}
+/* Letter-spacing breaks the joins of Arabic script. Latin marks (dir="ltr": logo, wordmark) keep theirs. */
+[dir="rtl"] body *:not([dir="ltr"], [dir="ltr"] *) {
+  letter-spacing: 0 !important;
+}
+/* Arabic glyphs are taller: open up the display line heights and the reveal masks. */
+[dir="rtl"] .t-display { line-height: 1.3; }
+[dir="rtl"] .t-h1,
+[dir="rtl"] .t-h2 { line-height: 1.32; }
+[dir="rtl"] .t-h3 { line-height: 1.4; }
+[dir="rtl"] .t-lede {
+  font-style: normal;
+  line-height: 1.5;
+}
+[dir="rtl"] .eyebrow { font-size: 13px; }
+[dir="rtl"] .caption { font-size: 12px; }
+[dir="rtl"] .line-mask {
+  padding-bottom: 0.18em;
+  margin-bottom: -0.18em;
+}
+
 /* Route scene: wave strokes drift continuously. */
 @keyframes wave-drift {
   from { transform: translateX(0); }

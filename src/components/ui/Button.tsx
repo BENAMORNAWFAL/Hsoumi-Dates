@@ -29,7 +29,7 @@ export function Button({
       <span className="text-[12px] leading-[20.4px]">{children}</span>
       <span
         aria-hidden
-        className="text-[18px] leading-[30.6px] transition-transform duration-500 group-hover:translate-x-1.5"
+        className="text-[18px] leading-[30.6px] transition-transform duration-500 group-hover:translate-x-1.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-1.5"
       >
         →
       </span>
