@@ -103,16 +103,16 @@ export function Footer({
         </p>
 
         <div className="mt-3 h-px w-full bg-cream/25" />
-        <div className="mt-5 flex flex-col gap-3 text-[10px] leading-[17px] text-parchment md:flex-row md:items-center md:gap-8 lg:mt-[20px]">
-          <p className="md:w-[30%]">© {brand.name} {new Date().getFullYear()}</p>
-          <p className="tracking-[2px] uppercase md:flex-1">{t.tagline}</p>
+        <div className="mt-5 flex flex-col gap-3 text-[10px] leading-[17px] text-parchment md:flex-row md:items-center md:justify-between md:gap-8 lg:mt-[20px]">
+          <p>© {brand.name} {new Date().getFullYear()}</p>
+          <p className="tracking-[2px] uppercase">{t.tagline}</p>
           <p>
             {t.poweredBy}{" "}
             <a
               href={SITE.author.url}
               target="_blank"
               rel="noopener"
-              className="tracking-[1.5px] text-cream underline decoration-cream/30 underline-offset-4 transition-colors hover:text-gold hover:decoration-gold"
+              className="text-[11px] font-semibold tracking-[1.5px] text-gold underline decoration-gold/40 underline-offset-4 transition-colors duration-300 hover:text-cream hover:decoration-cream"
             >
               {t.author}
             </a>
